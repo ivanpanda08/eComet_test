@@ -12,9 +12,19 @@ class PostgresDBConfig:
         self.database: str = os.getenv("DB_NAME", "db")
         self.user: str = os.getenv("DB_USER", "user")
         self.password: str = os.getenv("DB_PASSWORD", "password")
-        self.min_size: int = int(os.getenv("DB_POOL_MIN_SIZE", "1"))
-        self.max_size: int = int(os.getenv("DB_POOL_MAX_SIZE", "10"))
+        self.pool_min_size: int = int(os.getenv("DB_POOL_MIN_SIZE", "1"))
+        self.pool_max_size: int = int(os.getenv("DB_POOL_MAX_SIZE", "10"))
         self.command_timeout: int | None = int(os.getenv("DB_COMMAND_TIMEOUT", "60"))
+    
+    @property
+    def dsn_safe(self) -> str:
+        """Возвращает строку подключения к БД без пароля (для логирования)"""
+        return f"postgresql://{self.user}:***@{self.host}:{self.port}/{self.database}"
+
+    @property
+    def _dsn(self) -> str:
+        """Возвращает полную строку подключения к БД"""
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
     
 
 
@@ -27,3 +37,12 @@ class AppConfig:
         self.app_host: str = os.getenv("APP_HOST", "0.0.0.0")
         self.debug: bool = os.getenv("DEBUG", "false").lower() == "true"
         self.log_level: str = os.getenv("LOG_LEVEL", "INFO")
+
+def get_app_config() -> AppConfig:
+    """Функция для получения конфигурации приложения"""
+    return AppConfig()
+
+
+def get_db_config() -> PostgresDBConfig:
+    """Функция для получения конфигурации базы данных"""
+    return PostgresDBConfig()
