@@ -134,5 +134,38 @@ class GithubReposScrapper:
             self._logger.error(f"Error getting repositories: {e}")
             return []
 
+    async def get_repositories_batched(self, batch_size: int = 20):
+        """Асинхронный генератор, который возвращает репозитории батчами."""
+        try:
+            repositories = await self._get_top_repositories()
+            
+            for batch_start in range(0, len(repositories), batch_size):
+                batch_end = min(batch_start + batch_size, len(repositories))
+                batch_repos = repositories[batch_start:batch_end]
+                
+                # задачи для параллельной обработки батча
+                tasks = [
+                    self._process_repository(repo, batch_start + i + 1)
+                    for i, repo in enumerate(batch_repos)
+                ]
+                
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                valid_repositories = []
+                for i, result in enumerate(results):
+                    if isinstance(result, Exception):
+                        self._logger.error(
+                            f"Ошибка обработки репозитория {batch_start + i + 1}: {result}"
+                        )
+                    else:
+                        valid_repositories.append(result)
+                
+                if valid_repositories:
+                    yield valid_repositories
+                
+        except Exception as e:
+            self._logger.error(f"Error getting repositories: {e}")
+            return
+
     async def close(self):
         await self._session.close()
