@@ -1,0 +1,26 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse_db
+    ports:
+      - "${CLICKHOUSE_PORT:-8123}:8123"  # HTTP interface
+      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"  # Native interface
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-test}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./tables.sql:/docker-entrypoint-initdb.d/tables.sql:ro
+    networks:
+      - clickhouse_network
+    restart: unless-stopped
+
+volumes:
+  clickhouse_data:
+    driver: local
+
+networks:
+  clickhouse_network:
+    driver: bridge
