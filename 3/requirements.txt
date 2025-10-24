@@ -1,2 +1,4 @@
 aiohttp==3.11.11
 aiochclient==2.6.0
+aiolimiter==1.1.0
+python-dotenv==1.0.0
